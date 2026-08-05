@@ -45,10 +45,6 @@ object NetworkModule {
             PerfTrace.mark("sdui", "network_response_received")
             response
         }
-        // PERF.md measure->optimize: the hosted contract already sends
-        // "Cache-Control: max-age=3600, public". A disk response cache lets OkHttp serve a
-        // cold start straight from disk (no round trip at all) within that window instead of
-        // re-fetching every launch - see PERF.md for the before/after numbers.
         val cache = Cache(File(context.cacheDir, "http_cache"), 5L * 1024 * 1024)
         return OkHttpClient.Builder()
             .cache(cache)
