@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="brand_purple">#4B3FE4</color>
+    <color name="brand_purple_dark">#3A2FC0</color>
+    <color name="brand_purple_light">#EDEBFB</color>
+
+    <color name="surface_app_bg">#F5F5F7</color>
+    <color name="surface_card">#FFFFFFFF</color>
+
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#6B6B6B</color>
+    <color name="text_hint">#9B9B9B</color>
+
+    <color name="badge_red">#E63946</color>
+    <color name="badge_green">#1E8E3E</color>
+
+    <color name="divider">#E0E0E0</color>
+    <color name="dot_inactive">#D6D6E0</color>
+</resources>
