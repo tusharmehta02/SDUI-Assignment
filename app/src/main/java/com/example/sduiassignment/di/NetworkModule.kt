@@ -1,5 +1,6 @@
 package com.example.sduiassignment.di
 
+import android.content.Context
 import com.example.sduiassignment.data.model.Widget
 import com.example.sduiassignment.data.remote.ApiService
 import com.example.sduiassignment.data.remote.WidgetDeserializer
@@ -9,12 +10,15 @@ import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -32,19 +36,22 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-        // Marks the network/parse boundary for PERF.md: response bytes are fully in hand
-        // here, before Retrofit hands the body to Gson - everything after this mark and
-        // before HomeRepositoryImpl's own "repo_call_end" mark is deserialization time.
         val perfInterceptor = Interceptor { chain ->
             val response = chain.proceed(chain.request())
             PerfTrace.mark("sdui", "network_response_received")
             response
         }
+        // PERF.md measure->optimize: the hosted contract already sends
+        // "Cache-Control: max-age=3600, public". A disk response cache lets OkHttp serve a
+        // cold start straight from disk (no round trip at all) within that window instead of
+        // re-fetching every launch - see PERF.md for the before/after numbers.
+        val cache = Cache(File(context.cacheDir, "http_cache"), 5L * 1024 * 1024)
         return OkHttpClient.Builder()
+            .cache(cache)
             .addInterceptor(perfInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
