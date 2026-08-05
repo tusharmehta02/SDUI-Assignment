@@ -5,6 +5,7 @@ import com.example.sduiassignment.data.model.SublayoutType
 import com.example.sduiassignment.data.model.Widget
 import com.example.sduiassignment.data.model.WidgetPayload
 import com.example.sduiassignment.data.remote.ApiService
+import com.example.sduiassignment.ui.common.PerfTrace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -15,7 +16,11 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun getHomeWidgets(): Result<HomeWidgets> = withContext(Dispatchers.IO) {
         runCatching {
+            PerfTrace.mark("sdui", "repo_call_start")
             val response = apiService.getHomePage()
+            // Retrofit hands the response to Gson before returning, so everything between
+            // NetworkModule's "network_response_received" mark and this one is parse time.
+            PerfTrace.mark("sdui", "repo_call_end")
             val sublayouts = response.data.sublayouts
 
             fun renderableWidgets(group: List<Sublayout>): List<Widget> = group

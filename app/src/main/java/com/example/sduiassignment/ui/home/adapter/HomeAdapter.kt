@@ -20,6 +20,7 @@ import com.example.sduiassignment.databinding.ItemWidgetProductCollectionBinding
 import com.example.sduiassignment.databinding.ItemWidgetSearchBarBinding
 import com.example.sduiassignment.databinding.ItemWidgetTabBarBinding
 import com.example.sduiassignment.ui.common.ActionHandler
+import com.example.sduiassignment.ui.common.PerfTrace
 import com.example.sduiassignment.ui.common.parseHexColorOrNull
 
 private const val VIEW_TYPE_SEARCH_BAR = 0
@@ -31,7 +32,11 @@ private const val VIEW_TYPE_PRODUCT_COLLECTION = 5
 
 class HomeAdapter(
     private val widgets: List<Widget>,
-    private val onTabSelected: (WidgetPayload.TabBar.TabItem) -> Unit = {}
+    private val onTabSelected: (WidgetPayload.TabBar.TabItem) -> Unit = {},
+    /** Set only on the top-level content list being benchmarked ("sdui"/"static"); logs a
+     * PerfTrace mark the moment its last widget is bound, approximating "full page rendered"
+     * for a lazily-binding RecyclerView. Null elsewhere (header list, tab-switch rebinds). */
+    private val perfTag: String? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun getItemViewType(position: Int): Int = when (widgets[position].widgetType) {
@@ -72,6 +77,9 @@ class HomeAdapter(
             is CategoryGridViewHolder -> holder.bind(widget.payload as WidgetPayload.CategoryGrid)
             is BannerCarouselViewHolder -> holder.bind(widget.payload as WidgetPayload.BannerCarousel)
             is ProductCollectionViewHolder -> holder.bind(widget.payload as WidgetPayload.ProductCollection)
+        }
+        if (perfTag != null && position == widgets.lastIndex) {
+            PerfTrace.mark(perfTag, "last_item_bound")
         }
     }
 

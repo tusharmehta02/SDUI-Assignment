@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -18,6 +19,7 @@ import com.example.sduiassignment.data.model.WidgetPayload
 import com.example.sduiassignment.data.repository.DEFAULT_TAB_ID
 import com.example.sduiassignment.data.repository.HomeWidgets
 import com.example.sduiassignment.databinding.ActivityMainBinding
+import com.example.sduiassignment.ui.common.PerfTrace
 import com.example.sduiassignment.ui.common.parseHexColorOrNull
 import com.example.sduiassignment.ui.home.HomeUiState
 import com.example.sduiassignment.ui.home.HomeViewModel
@@ -36,10 +38,12 @@ class MainActivity : AppCompatActivity() {
     private var headerColorAnimator: ValueAnimator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        PerfTrace.mark("sdui", "activity_start")
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.doOnPreDraw { PerfTrace.mark("sdui", "first_frame") }
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -78,8 +82,10 @@ class MainActivity : AppCompatActivity() {
                 binding.errorLayout.visibility = View.GONE
                 binding.swipeRefresh.visibility = View.VISIBLE
                 homeWidgets = state.widgets
+                PerfTrace.mark("sdui", "adapter_set")
                 binding.rvHeader.adapter = HomeAdapter(state.widgets.headerWidgets, ::onTabSelected)
-                binding.rvHome.adapter = HomeAdapter(state.widgets.contentFor(DEFAULT_TAB_ID))
+                binding.rvHome.adapter = HomeAdapter(state.widgets.contentFor(DEFAULT_TAB_ID), perfTag = "sdui")
+                binding.root.doOnPreDraw { PerfTrace.mark("sdui", "content_first_frame") }
             }
             is HomeUiState.Error -> {
                 binding.progressBar.visibility = View.GONE
@@ -97,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         animateHeaderColor(tab.backgroundColor)
 
         val content = homeWidgets?.contentFor(tab.id) ?: return
-        binding.rvHome.adapter = HomeAdapter(content)
+        binding.rvHome.adapter = HomeAdapter(content, perfTag = "sdui")
         binding.rvHome.scrollToPosition(0)
     }
 

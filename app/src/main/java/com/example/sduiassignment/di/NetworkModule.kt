@@ -3,12 +3,14 @@ package com.example.sduiassignment.di
 import com.example.sduiassignment.data.model.Widget
 import com.example.sduiassignment.data.remote.ApiService
 import com.example.sduiassignment.data.remote.WidgetDeserializer
+import com.example.sduiassignment.ui.common.PerfTrace
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -34,7 +36,16 @@ object NetworkModule {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
+        // Marks the network/parse boundary for PERF.md: response bytes are fully in hand
+        // here, before Retrofit hands the body to Gson - everything after this mark and
+        // before HomeRepositoryImpl's own "repo_call_end" mark is deserialization time.
+        val perfInterceptor = Interceptor { chain ->
+            val response = chain.proceed(chain.request())
+            PerfTrace.mark("sdui", "network_response_received")
+            response
+        }
         return OkHttpClient.Builder()
+            .addInterceptor(perfInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
