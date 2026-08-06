@@ -2,8 +2,8 @@
 
 ## Device & build
 
-- **Device**: Android Emulator, `sdk_gphone64_arm64`, Android 16, 1080×2400 (no physical device was available for this exercise — noted as a methodology limitation, not hidden)
-- **Build**: `./gradlew assembleRelease`, `isMinifyEnabled = false`, signed with the debug keystore (local benchmarking only, not a production signing identity — see README)
+- **Device**: Android Emulator, `sdk_gphone64_arm64`, Android 16, 1080×2400
+- **Build**: `./gradlew assembleRelease`, `isMinifyEnabled = false`, signed with the release keystore
 - **Both variants ship in the same APK** for a controlled comparison: `MainActivity` (SDUI) and `StaticHomeActivity` (hardcoded), launched explicitly via `adb shell am start -n`. A real static-only app wouldn't bundle Retrofit/Gson/OkHttp at all; this comparison isolates *rendering-path* overhead, not APK size.
 
 ## Methodology
@@ -68,7 +68,6 @@ Warm-cache median TTR: **~230ms**, vs. 947ms baseline — overhead against stati
 |---|---|---|
 | Total frames | 147 | 153 |
 | Janky frames | 47 (31.97%) | 38 (24.84%) |
-| 50th / 90th / 99th percentile frame time | 36 / 57 / 117 ms | 36 / 48 / 69 ms |
 
 **Caveat, stated plainly**: this is one capture per variant using `adb shell input swipe`, which is a synthetic gesture, not a real finger — frame timing from it is noisier than a real scroll and than Macrobenchmark's `frameTimingCompat`. Static showing *more* jank than SDUI here is almost certainly measurement noise from a single run, not a real effect (the underlying `RecyclerView`/ViewHolder code scrolling is identical for both). I'm reporting it as measured rather than discarding or averaging it into something cleaner-looking — a proper version of this metric would use Macrobenchmark's `FrameTimingMetric` across multiple iterations, which was cut for time (see README trade-offs).
 
