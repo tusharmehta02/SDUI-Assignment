@@ -376,10 +376,25 @@
                 }
               },
               {
+                "widget_id": "LiveChatWidget",
+                "widget_type": "LiveChatWidget",
+                "status": "SUCCESS",
+                "position": 4,
+                "json_payload": {
+                  "message": "Chat with a car expert",
+                  "action": {
+                    "type": "ACTION_TYPE_OPERATION",
+                    "operation": {
+                      "type": "OPEN_CHAT"
+                    }
+                  }
+                }
+              },
+              {
                 "widget_id": "PromotionBannerWidget",
                 "widget_type": "BannerCarouselWidget",
                 "status": "SUCCESS",
-                "position": 4,
+                "position": 5,
                 "json_payload": {
                   "items": [
                     {
@@ -431,7 +446,7 @@
                 "widget_id": "UsedCarsYoullLoveWidget",
                 "widget_type": "ProductCollectionWidget",
                 "status": "SUCCESS",
-                "position": 5,
+                "position": 6,
                 "json_payload": {
                   "header": {
                     "title": {

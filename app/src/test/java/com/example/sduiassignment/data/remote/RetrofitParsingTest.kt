@@ -25,11 +25,11 @@ class RetrofitParsingTest {
     }
 
     @Test
-    fun parsesAllEightHomeWidgets() {
+    fun parsesAllNineHomeWidgets() {
         val response = parseResponse()
         val widgets = response.data.sublayouts.flatMap { it.widgetgroups }.flatMap { it.widgets }
 
-        assertEquals(8, widgets.size)
+        assertEquals(9, widgets.size)
         assertEquals(WidgetType.SEARCH_BAR, widgets[0].widgetType)
         assertTrue(widgets[0].payload is WidgetPayload.SearchBar)
 
@@ -91,5 +91,29 @@ class RetrofitParsingTest {
             .payload as WidgetPayload.ProductCollection
         assertEquals("Cars you'll love", products.header?.title?.text)
         assertEquals("Exclusive offers on used cars", products.header?.subtitle?.text)
+    }
+
+    /** The "all" tab content carries one deliberately-unknown widget (LiveChatWidget) to prove
+     * the unknown-component fallback: the parser resolves it to WidgetPayload.Unknown instead
+     * of throwing, and HomeRepositoryImpl's own filter (status == SUCCESS && payload !is
+     * Unknown, mirrored here) drops it before it would ever reach the renderer - the rest of
+     * the "all" tab's widgets render untouched. */
+    @Test
+    fun unknownWidgetTypeFallsBackGracefully() {
+        val response = parseResponse()
+        val allTabWidgets = response.data.sublayouts
+            .filter { it.type == SublayoutType.MAIN_SCREEN && (it.tabId ?: "all") == "all" }
+            .flatMap { it.widgetgroups }.flatMap { it.widgets }
+
+        val liveChat = allTabWidgets.first { it.widgetId == "LiveChatWidget" }
+        assertEquals("LiveChatWidget", liveChat.widgetType)
+        assertTrue(liveChat.payload is WidgetPayload.Unknown)
+
+        val renderable = allTabWidgets.filter { it.status == "SUCCESS" && it.payload !is WidgetPayload.Unknown }
+        assertTrue(renderable.none { it.widgetId == "LiveChatWidget" })
+        assertEquals(
+            listOf(WidgetType.HORIZONTAL_RAIL, WidgetType.CATEGORY_GRID, WidgetType.BANNER_CAROUSEL, WidgetType.PRODUCT_COLLECTION),
+            renderable.sortedBy { it.position }.map { it.widgetType }
+        )
     }
 }
